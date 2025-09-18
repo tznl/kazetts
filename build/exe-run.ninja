@@ -1,0 +1,18 @@
+cc = gcc
+flags = -fdiagnostics-color=always -Wall -Wextra -std=c99
+includes = -I"./src/include/" -I"./thirdparty/piper1-gpl/libpiper/install/include/"
+libs = -L"./thirdparty/piper1-gpl/libpiper/install/" -L"./thirdparty/piper1-gpl/libpiper/install/lib64/" -lpiper -lonnxruntime
+cwd = /home/tznl/git/alttts
+builddir = /home/tznl/git/alttts/build
+target = $builddir/run
+
+rule link
+  command = $cc $flags -o $out $in $libs
+
+rule compile
+  command = $cc $flags $includes -c $in -o $out
+
+build $builddir/main.o: compile $cwd/src/main.c
+build $target: link $builddir/main.o
+
+default $target
