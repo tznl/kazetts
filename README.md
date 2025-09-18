@@ -1,2 +1,4 @@
 # ttsfront
-placeholder
+Build:
+cc -o mate mate.c
+./mate
