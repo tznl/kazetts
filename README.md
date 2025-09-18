@@ -1,4 +1,4 @@
 # ttsfront
 Build:
-cc -o mate mate.c
-./mate
+1. cc -o mate mate.c
+2. ./mate
