@@ -11,9 +11,11 @@ i32 main(void) {
 		});
 
 		AddFile(e, "./src/*.c");
+		AddFile(e, "./thirdparty/miniaudio/miniaudio.c");
 
 		AddIncludePaths(e, "./src/include/",
 				"./thirdparty/",
+				"./thirdparty/miniaudio/",
 				"./thirdparty/piper1-gpl/libpiper/install/include/");
 
 		if (isLinux()) {
