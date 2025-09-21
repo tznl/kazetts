@@ -36,7 +36,7 @@ int pcm_to_wav()
 	long dataSize = ftell(fin);
 	fseek(fin, 0, SEEK_SET);
 
-	FILE *fout = fopen("output.wav", "wb");
+	FILE *fout = fopen(out, "wb");
 	if (!fout) {
 		perror("fopen output");
 		fclose(fin);
@@ -68,43 +68,77 @@ int pcm_to_wav()
 	fclose(fin);
 	fclose(fout);
 
-	printf("Wrote WAV file %s (%ld bytes audio)\n", out, dataSize);
+//	printf("Wrote WAV file %s (%ld bytes audio)\n", out, dataSize);
 	return 0;
+}
+
+char* read_line( FILE * f ) 
+{
+	int cap = 32,  next = 0, c;
+	char * p = malloc( cap );
+	while( 1 ) { 
+		if ( next == cap ) {
+			p = realloc( p, cap *= 2 );
+		}
+		c = fgetc( f ); 
+		if ( c == EOF || c == '\n' ) {
+			p[next++] = 0;
+			break;
+		}
+		p[next++] = c;
+	}
+	if ( c == EOF && next == 1 ) {
+		free( p );
+		p = NULL;
+	}
+
+	return p;
 }
 
 int main(void) 
 {
-	piper_synthesizer *synth = piper_create("../voice/en_US-amy-medium.onnx",
-                                            "../voice/en_US-amy-medium.onnx.json",
-                                            "../thirdparty/piper1-gpl/libpiper/install/espeak-ng-data");
-	FILE* f = fopen("./output.raw", "wb");
-	if (!f) {
-		perror("Failed to open output.raw");
-		piper_free(synth);
-		return 1;
+	char* input;
+	
+	ma_result result;
+	ma_engine engine;
+
+	result = ma_engine_init(NULL, &engine);
+	if (result != MA_SUCCESS) {
+		return result;
 	}
-
-	piper_synthesize_options options = piper_default_synthesize_options(synth);
-	// Change options here:
-	// options.length_scale = 2;
-	// options.speaker_id = 5;
-
-	// Start synthesis
-	piper_synthesize_start(
-		synth,
-		"wazzaaaap",
-		&options // pass NULL for defaults 
-	);
 
 	piper_audio_chunk chunk;
-	while (piper_synthesize_next(synth, &chunk) != PIPER_DONE) {
-		fwrite(chunk.samples, sizeof(float), chunk.num_samples, f);
+	piper_synthesizer *synth = piper_create(
+		"../voice/en_US-amy-medium.onnx",
+		"../voice/en_US-amy-medium.onnx.json",
+		"../thirdparty/piper1-gpl/libpiper/install/espeak-ng-data");
+	piper_synthesize_options options = piper_default_synthesize_options(synth);
+
+	printf("loop start\n\n");
+	while (1) {
+		printf("> ");
+		input = read_line(stdin);
+		FILE* f = fopen("./output.raw", "wb");
+		if (!f) {
+			perror("Failed to open output.raw");
+			return 1;
+		}
+		piper_synthesize_start(
+			synth,
+			input,
+			&options);
+
+		while (piper_synthesize_next(synth, &chunk) != PIPER_DONE) {
+			fwrite(chunk.samples, sizeof(float), chunk.num_samples, f);
+		}
+
+		pcm_to_wav();
+		ma_engine_play_sound(&engine, "output.wav", NULL);
+		free(input);
+//		fclose(f);
 	}
-	
-	fclose(f);
 
-	pcm_to_wav();
-
-	piper_free(synth);
+	piper_free(synth); 
+	free(input);
 	return 0;
 }
