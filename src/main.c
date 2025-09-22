@@ -1,10 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _WIN32
+    #include "dirent.h"
+#else
+    #include <dirent.h>
+#endif
 
 #include "piper.h"
 #include "miniaudio.h"
 
+enum command_return {
+	C_VOID,
+	C_EXIT,
+	C_INVALID,
+	C_LIST_VOICE,
+	C_SET_VOICE
+};
 
 typedef struct {
 	char     riff[4];        // "RIFF"
@@ -22,11 +34,175 @@ typedef struct {
 	uint32_t subchunk2Size;
 } wav_header;
 
-int pcm_to_wav() 
-{
-	char* in = "output.raw";
-	char* out = "output.wav";
+int pcm_to_wav(char* in, char* out);
+char* read_line( FILE * f ); 
+int cmd_parse(char* input);
+void find_first_files(const char *folder, char *onnx_path, char *json_path, size_t path_size);
+void list_dirs();
+int folder_exists(const char *folder);
+void write_config(const char *folder);
 
+int main(void) 
+{
+	char* audio_in  = "./data/export/output.raw";
+	char* audio_out = "./data/export/output.wav";
+
+	FILE* f_config = fopen("./data/config", "r");
+	if (!f_config) {
+		perror("config failed to load\n");
+		return 1;
+	}
+	char line[256];
+	if (fgets(line, sizeof(line), f_config) != NULL) { 
+		// fgets includes the newline if it exists, remove it
+		size_t len = 0;
+		while (line[len] != '\0') len++;
+		if (len > 0 && line[len - 1] == '\n') {
+			line[len - 1] = '\0';
+		}
+	}
+
+	FILE* art = fopen("./data/art/konata1", "r");
+	if (!art) {
+		perror("art failed to load\n");
+		return 1;
+	}
+	int c;
+	while ((c = fgetc(art)) != EOF) {
+		putchar(c);
+	} 
+	fclose(art);
+
+	printf("\033[0;31m");
+	printf("Loading... Please Wait\r");
+	printf("\033[0m");
+	fflush(stdout);
+
+	ma_result result;
+	ma_engine engine;
+
+	result = ma_engine_init(NULL, &engine);
+	if (result != MA_SUCCESS) {
+		return result;
+	}
+
+	char folder[256] = "./data/voice/";
+	strcat(folder, line);
+	char onnx[256] = {0};
+	char onnx_json[256] = {0};
+	find_first_files(folder, onnx, onnx_json, sizeof(onnx));
+
+	piper_audio_chunk chunk;
+	piper_synthesizer *synth = piper_create(
+		onnx,
+		onnx_json,
+		"./data/espeak-ng-data");
+	piper_synthesize_options options = piper_default_synthesize_options(synth);
+
+	char* input;
+
+	// 10 spaces to flush characters from the loading text
+	printf("\033[0;32m");
+	printf("kazetts 0.0.0 (%s)         \n\n\n\n", line);
+	printf("\033[0m");
+	while (1) {
+		FILE* f = fopen(audio_in, "wb");
+		if (!f) {
+			perror("Failed to open output.raw");
+			return 1;
+		}
+
+		printf("> ");
+		input = read_line(stdin);
+
+		if (input[0] ==  '/') {
+			switch (cmd_parse(input)) {
+				case C_EXIT:
+					break;
+				case C_VOID:
+					continue;
+				case C_INVALID:
+					continue;
+				case C_LIST_VOICE:
+					continue;
+				case C_SET_VOICE:
+					continue;
+			}
+			break;
+		}
+
+		piper_synthesize_start(
+			synth,
+			input,
+			&options);
+
+		while (piper_synthesize_next(synth, &chunk) != PIPER_DONE) {
+			fwrite(chunk.samples, sizeof(float), chunk.num_samples, f);
+		}
+
+		pcm_to_wav(audio_in, audio_out);
+		ma_engine_play_sound(&engine, audio_out, NULL);
+		free(input);
+		//fclose(f);
+	}
+
+	piper_free(synth); 
+	free(input);
+	return 0;
+}
+
+void list_dirs() {
+	const char *folder = "./data/voice/";  // folder to scan
+	DIR *dir = opendir(folder);
+
+	struct dirent *entry;
+	while ((entry = readdir(dir)) != NULL) {
+		//skip "." and ".."
+		if (entry->d_name[0] == '.') continue;
+
+		//check if entry is a directory
+		if (entry->d_type == 4) { //again DT_DIR == 4 and i have no idea why
+			printf("\033[0;34m");
+			printf("%s\n", entry->d_name);
+			printf("\033[0m");
+		}
+	}
+
+	closedir(dir);
+}
+
+void find_first_files(const char *folder, char *onnx_path, char *json_path, size_t path_size) 
+{
+	DIR *dir = opendir(folder);
+	if (!dir) {
+		perror("Failed to open folder");
+		return;
+	}
+
+	struct dirent *entry;
+	while ((entry = readdir(dir)) != NULL) {
+		//skip directories (4 = DT_DIR but wont work for some reason)
+		if (entry->d_type == 4 ) continue;
+
+		//check for .onnx
+		if (!onnx_path[0] && strstr(entry->d_name, ".onnx")) {
+			snprintf(onnx_path, path_size, "%s/%s", folder, entry->d_name);
+		}
+
+		//check for .json
+		if (!json_path[0] && strstr(entry->d_name, ".json")) {
+			snprintf(json_path, path_size, "%s/%s", folder, entry->d_name);
+		}
+	
+		//stop if both found
+		if (onnx_path[0] && json_path[0]) break;
+	}
+
+	closedir(dir);
+}
+
+int pcm_to_wav(char* in, char* out) 
+{
 	FILE *fin = fopen(in, "rb");
 	if (!fin) {
 		perror("fopen input");
@@ -68,7 +244,6 @@ int pcm_to_wav()
 	fclose(fin);
 	fclose(fout);
 
-//	printf("Wrote WAV file %s (%ld bytes audio)\n", out, dataSize);
 	return 0;
 }
 
@@ -95,50 +270,75 @@ char* read_line( FILE * f )
 	return p;
 }
 
-int main(void) 
+int folder_exists(const char *folder) 
 {
-	char* input;
-	
-	ma_result result;
-	ma_engine engine;
-
-	result = ma_engine_init(NULL, &engine);
-	if (result != MA_SUCCESS) {
-		return result;
+	char full_path[256];
+	memset(full_path, '\0', sizeof(full_path));
+	strcat(full_path, "./data/voice/");
+	strcat(full_path, folder);
+	DIR *dir = opendir(full_path);
+	if (dir) {
+		closedir(dir);
+		return 1;
 	}
-
-	piper_audio_chunk chunk;
-	piper_synthesizer *synth = piper_create(
-		"../voice/en_US-amy-medium.onnx",
-		"../voice/en_US-amy-medium.onnx.json",
-		"../thirdparty/piper1-gpl/libpiper/install/espeak-ng-data");
-	piper_synthesize_options options = piper_default_synthesize_options(synth);
-
-	printf("loop start\n\n");
-	while (1) {
-		printf("> ");
-		input = read_line(stdin);
-		FILE* f = fopen("./output.raw", "wb");
-		if (!f) {
-			perror("Failed to open output.raw");
-			return 1;
-		}
-		piper_synthesize_start(
-			synth,
-			input,
-			&options);
-
-		while (piper_synthesize_next(synth, &chunk) != PIPER_DONE) {
-			fwrite(chunk.samples, sizeof(float), chunk.num_samples, f);
-		}
-
-		pcm_to_wav();
-		ma_engine_play_sound(&engine, "output.wav", NULL);
-		free(input);
-//		fclose(f);
-	}
-
-	piper_free(synth); 
-	free(input);
 	return 0;
 }
+
+void write_config(const char *folder) 
+{
+	FILE *file = fopen("./data/config", "w");
+	if (!file) {
+		perror("Failed to open config file");
+		return;
+	}
+	fprintf(file, "%s\n", folder);
+	fclose(file);
+}
+
+
+int cmd_parse(char* input)
+{
+	char *space = strchr(input, ' ');
+	int cmd_length;
+
+	if (space != NULL) {
+		cmd_length = space - input;
+	} else {
+		cmd_length = strlen(input);
+	}
+
+	char command[cmd_length + 1];
+	strncpy(command, input, cmd_length);
+	command[cmd_length] = '\0';
+
+	char *arg = NULL;
+	if (space != NULL) {
+		arg = space + 1; // pointer to folder name
+	}
+
+	if (!strcmp(command, "/void")) {
+		printf("Continuing\n");
+		return C_VOID;
+	} else if (!strcmp(command, "/exit")) {
+		return C_EXIT;
+	} else if (!strcmp(command, "/list_voice")) {
+		list_dirs();
+		return C_LIST_VOICE;
+	} else if (!strcmp(command, "/set_voice")) {
+		if (!arg) {
+			printf("Usage: /set_voice folder_name\n");
+			return C_INVALID;
+		}
+		if (!folder_exists(arg)) {
+			printf("Voice folder doesn't exist:  \033[0;31m%s\033[0m\n", arg);
+			return C_INVALID;
+		}
+		printf("Voice folder set to: \033[0;34m%s\033[0m\n", arg);
+		write_config(arg);
+		return C_SET_VOICE; // or a dedicated C_SET_VOICE
+	} else {
+		printf("Invalid Command: %s\n", command);
+		return C_INVALID;
+	}
+}
+
