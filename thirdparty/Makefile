@@ -14,6 +14,14 @@ P_LDIR	= -L"espeak-ng/build/espeak_ng-install/lib/" -L"ucd-tools/" -L"onnxruntim
 P_LFLAG	= -lonnxruntime -lucd -lespeak-ng
 
 CFLAGS	= -std=c99
+make: ucd espeak piper
+
+clean:
+
+	rm "ucd-tools/libucd.a"
+	rm "piper1-gpl/libpiper.a"
+	rm -rf "espeak-ng/build/"
+
 ucd:
 
 	$(CC) -c $(UCD_IN) $(CFLAGS) $(UCD_INC)
@@ -23,11 +31,7 @@ ucd:
 espeak:
 
 
-#	git clone https://github.com/espeak-ng/espeak-ng.git 
 	mkdir $(E_ROOT)
-
-#	git -C "espeak-ng" fetch origin
-#	git -C "espeak-ng" checkout 212928b394a96e8fd2096616bfd54e17845c48f6
 
 	cmake -B "$(E_BUILD)" -S "espeak-ng" \
 	  -DCMAKE_INSTALL_PREFIX="$(E_INS)" \
