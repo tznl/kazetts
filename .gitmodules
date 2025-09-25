@@ -4,3 +4,12 @@
 [submodule "thirdparty/ucd-tools"]
 	path = thirdparty/ucd-tools
 	url = https://github.com/rhdunn/ucd-tools.git
+[submodule "thirdparty/dirent"]
+	path = thirdparty/dirent
+	url = https://github.com/tronkko/dirent.git
+[submodule "thirdparty/mate.h"]
+	path = thirdparty/mate.h
+	url = https://github.com/TomasBorquez/mate.h.git
+[submodule "thirdparty/miniaudio"]
+	path = thirdparty/miniaudio
+	url = https://github.com/mackron/miniaudio.git
