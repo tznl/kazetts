@@ -1,3 +1,4 @@
+*.swp
 build/
 mate
 run.sh
