@@ -66,7 +66,7 @@ i32 main(void) {
 				s("./build/data/libonnxruntime.so.1"))) {
 				printf("File copy failed: libonnxruntime.so.1\n");
 			} else {
-				printf("Don't forget this:\n\ncp -r \"thirdparty/espeak-ng/espeak-ng-data/\" \"build/data/\"\n");
+				printf("Don't forget this:\n\ncp -r \"thirdparty/espeak-ng/build/espeak_ng/espeak-ng-data/\" \"build/data/\"\n\n\n");
 			}
 
 			chmod("./run.sh", S_IRUSR | S_IWUSR | S_IXUSR);
