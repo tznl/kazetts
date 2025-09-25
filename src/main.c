@@ -62,7 +62,7 @@ int main(void)
 		}
 	}
 
-	FILE* art = fopen("./data/art/konata1", "r");
+	FILE* art = fopen("./data/art/art", "r");
 	if (!art) {
 		perror("art failed to load\n");
 		return 1;

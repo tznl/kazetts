@@ -3,3 +3,5 @@ mate
 run.sh
 thirdparty/*.wav
 thirdparty/*.raw
+thirdparty/onnxruntime/
+thirdparty/piper1-gpl/libpiper.a

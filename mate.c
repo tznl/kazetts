@@ -14,31 +14,42 @@ i32 main(void) {
 		AddFile(e, "./src/*.c");
 		AddFile(e, "./thirdparty/miniaudio/miniaudio.c");
 
-		AddIncludePaths(e, "./src/include/",
+		AddIncludePaths(e,
 				"./thirdparty/",
 				"./thirdparty/miniaudio/",
-				"./thirdparty/piper1-gpl/libpiper/install/include/");
+				"./thirdparty/piper1-gpl/libpiper/include/");
 
 		Mkdir(s("./build/data/"));
 		Mkdir(s("./build/data/export/"));
 		Mkdir(s("./build/data/voice/"));
+		Mkdir(s("./build/data/voice/default/"));
 
 		Mkdir(s("./build/data/art/"));
 		if (FileAdd(
 			s("./build/data/config"), 
 			s("default"))) {
 			printf("File write failed\n");
-		} else if (!FileCopy(
-			s("./thirdparty/art/konata1"), 
-			s("./build/data/art/konata1"))) {
-			printf("konata art copied\n");
+		} else if (FileCopy(
+			s("./thirdparty/art/art"), 
+			s("./build/data/art/art"))) {
+			printf("konata art copy fail\n");
+		} else if (FileCopy(
+			s("./voice/default/default.onnx"), 
+			s("./build/data/voice/default/default.onnx"))) {
+			printf("default voice copy fail\n");
+		} else if (FileCopy(
+			s("./voice/default/default.onnx.json"), 
+			s("./build/data/voice/default/default.onnx.json"))) {
+			printf("default voice copy fail\n");
 		}
 
 		if (isLinux()) {
 			#ifdef __linux__
-			AddLibraryPaths(e, "./thirdparty/piper1-gpl/libpiper/install/", 
-					"./thirdparty/piper1-gpl/libpiper/install/lib64/");
-			LinkSystemLibraries(e, "piper", "onnxruntime", "pthread", "m");
+			AddLibraryPaths(e, "./thirdparty/piper1-gpl/",
+				"./thirdparty/espeak-ng/build/espeak_ng-install/lib/",
+				"./thirdparty/ucd-tools/",
+				"./thirdparty/onnxruntime/lib/");
+			LinkSystemLibraries(e, "piper", "onnxruntime", "espeak-ng", "ucd", "pthread", "m", "stdc++");
 
 			if	(FileDelete(s("./run.sh")) == FILE_DELETE_ACCESS_DENIED) {
 				printf("File delete failed\n");
@@ -47,20 +58,15 @@ i32 main(void) {
 				s("#!/bin/sh\ncd ./build\n./run\n"))) {
 				printf("File write failed\n");
 			} else if (FileCopy(
-				s("./thirdparty/piper1-gpl/libpiper/install/libpiper.so"), 
-				s("./build/data/libpiper.so"))) {
-				printf("File copy failed: libpiper.so\n");
-			} else if (FileCopy(
-				s("./thirdparty/piper1-gpl/libpiper/install/lib64/libonnxruntime.so"), 
+				s("./thirdparty/onnxruntime/lib/libonnxruntime.so"), 
 				s("./build/data/libonnxruntime.so"))) {
 				printf("File copy failed: libonnxruntime.so\n");
 			} else if (FileCopy(
-				s("./thirdparty/piper1-gpl/libpiper/install/lib64/libonnxruntime.so.1"), 
+				s("./thirdparty/onnxruntime/lib/libonnxruntime.so.1"), 
 				s("./build/data/libonnxruntime.so.1"))) {
 				printf("File copy failed: libonnxruntime.so.1\n");
 			} else {
-				printf("Don't forget this:\n\ncp -r \"thirdparty/piper1-gpl/libpiper/install/espeak-ng-data/\" \"build/data/\"\n");
-				printf("cp -r \"voice/*\" \"build/data/voice/\"\n\n");
+				printf("Don't forget this:\n\ncp -r \"thirdparty/espeak-ng/espeak-ng-data/\" \"build/data/\"\n");
 			}
 
 			chmod("./run.sh", S_IRUSR | S_IWUSR | S_IXUSR);
