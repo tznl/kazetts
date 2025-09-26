@@ -1,0 +1,7 @@
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Target Name="Build">
+    <Exec Command="msbuild .\espeak-ng\src\windows\espeak-ng.sln" />
+    <Exec Command="msbuild .\windows\ucd.vcxproj" />
+    <Exec Command="msbuild .\windows\piper.vcxproj" />
+  </Target>
+</Project>

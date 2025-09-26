@@ -8,7 +8,11 @@ i32 main(void) {
 			.output	  = "run",
 			.warnings = FLAG_WARNINGS,
 			.std	  = FLAG_STD_C99,
+			#ifdef _WIN32
+			.flags	  = "/MT"
+			#else
 			.flags	  = "-Wl,-rpath,./data"
+			#endif
 		});
 
 		AddFile(e, "./src/*.c");
@@ -72,9 +76,23 @@ i32 main(void) {
 			chmod("./run.sh", S_IRUSR | S_IWUSR | S_IXUSR);
 			#endif
 		} else if (isWindows()) {
-			AddIncludePaths(e, "./thirdparty/dirent/include/dirent.h");
-			//AddLibraryPaths(e, "");
-			//LinkSystemLibraries(e, "lpiper", "l");
+			AddIncludePaths(e, "./thirdparty/dirent/include/");
+			AddLibraryPaths(e, "./thirdparty/windows/x64/Release/",
+				"./thirdparty/espeak-ng/src/windows/x64/Debug/",
+				"./thirdparty/onnxruntime/lib/");
+			LinkSystemLibraries(e, "piper", "onnxruntime", "libespeak-ng", "ucd");
+			
+			if (FileCopy(
+				s("./thirdparty/espeak-ng/src/windows/x64/Debug/libespeak-ng.dll"), 
+				s("./build/libespeak-ng.dll"))) {
+				printf("File copy failed: libespeak-ng.dll\n");
+			} else if (FileCopy(
+				s("./thirdparty/onnxruntime/lib/onnxruntime.dll"), 
+				s("./build/onnxruntime.dll"))) {
+				printf("File copy failed: onnxruntime.dll\n");
+			} else {
+				printf("Don't forget this:\n\ncp -r \"thirdparty/espeak-ng/build/espeak_ng/espeak-ng-data/\" \"build/data/\"\n\n\n");
+			}
 		}
 
 		InstallExecutable(e);

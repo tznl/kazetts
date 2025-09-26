@@ -1,8 +1,15 @@
 *.swp
+.vs/
 build/
 mate
+mate.exe
+mate.obj
 run.sh
 thirdparty/*.wav
 thirdparty/*.raw
 thirdparty/onnxruntime/
 thirdparty/piper1-gpl/libpiper.a
+thirdparty/.vs
+thirdparty/windows/piper/
+thirdparty/windows/ucd/
+thirdparty/windows/x64/

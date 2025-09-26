@@ -307,7 +307,7 @@ int cmd_parse(char* input)
 		cmd_length = strlen(input);
 	}
 
-	char command[cmd_length + 1];
+	char command[256];
 	strncpy(command, input, cmd_length);
 	command[cmd_length] = '\0';
 
