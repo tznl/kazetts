@@ -7,3 +7,8 @@ Build:
 5. cd ..
 6. make
 7. cd build && ./run
+
+For cross compilation:
+CC="x86_64-w64-mingw32-gcc" CXX="x86_64-w64-mingw32-g++"
+or
+CC="clang --target=x86_64-w64-mingw32" CXX="clang --target=x86_64-w64-mingw32"

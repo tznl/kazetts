@@ -73,9 +73,7 @@ int main(void)
 	} 
 	fclose(art);
 
-	printf("\033[0;31m");
 	printf("Loading... Please Wait\r");
-	printf("\033[0m");
 	fflush(stdout);
 
 	ma_result result;
@@ -102,9 +100,7 @@ int main(void)
 	char* input;
 
 	// 10 spaces to flush characters from the loading text
-	printf("\033[0;32m");
 	printf("kazetts 0.0.0 (%s)         \n\n\n\n", line);
-	printf("\033[0m");
 	while (1) {
 		FILE* f = fopen(audio_in, "wb");
 		if (!f) {
@@ -162,9 +158,7 @@ void list_dirs() {
 
 		//check if entry is a directory
 		if (entry->d_type == 4) { //again DT_DIR == 4 and i have no idea why
-			printf("\033[0;34m");
 			printf("%s\n", entry->d_name);
-			printf("\033[0m");
 		}
 	}
 
@@ -330,10 +324,10 @@ int cmd_parse(char* input)
 			return C_INVALID;
 		}
 		if (!folder_exists(arg)) {
-			printf("Voice folder doesn't exist:  \033[0;31m%s\033[0m\n", arg);
+			printf("Voice folder doesn't exist:  %s\n", arg);
 			return C_INVALID;
 		}
-		printf("Voice folder set to: \033[0;34m%s\033[0m\n", arg);
+		printf("Voice folder set to: %s\n", arg);
 		write_config(arg);
 		return C_SET_VOICE; // or a dedicated C_SET_VOICE
 	} else {

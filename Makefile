@@ -28,11 +28,14 @@ make:
 		-o /home/tznl/git/kazetts/build/run \
 		/home/tznl/git/kazetts/build/main.o /home/tznl/git/kazetts/build/miniaudio.o \
 		./thirdparty/piper1-gpl/libpiper.a ./thirdparty/espeak-ng/src/.libs/libespeak-ng.a \
-		./thirdparty/ucd-tools/src/.libs/libucd.a ./thirdparty/onnxruntime/lib/libonnxruntime.a \
+		./thirdparty/ucd-tools/src/.libs/libucd.a \
+		-L"thirdparty/onnxruntime/lib/" -lonnxruntime \
 		$(LFLAGS)
 	
 	-@cp thirdparty/onnxruntime/lib/libonnxruntime.so build/data/
 	-@cp thirdparty/onnxruntime/lib/libonnxruntime.so.1 build/data/
+
+	-@rm build/*.o
 
 cross:
 
@@ -67,3 +70,5 @@ cross:
 	-@cp /usr/x86_64-w64-mingw32/lib/libstdc++-6.dll build/
 	-@cp /usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll build/
 	-@cp /usr/x86_64-w64-mingw32/lib/libgcc_s_seh-1.dll build/
+
+	-@rm build/*.o
