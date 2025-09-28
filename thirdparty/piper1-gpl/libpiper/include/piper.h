@@ -14,6 +14,18 @@ extern "C" {
 #define PIPER_DONE 1
 #define PIPER_ERR_GENERIC -1
 
+#pragma once
+
+#if defined(_WIN32) || defined(_WIN64)
+  #ifdef BUILDING_PIPER_DLL
+    #define PIPER_API __declspec(dllexport)
+  #else
+    #define PIPER_API __declspec(dllimport)
+  #endif
+#else
+  #define PIPER_API
+#endif
+
 /**
  * \brief Text-to-speech synthesizer.
  */

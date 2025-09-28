@@ -4,12 +4,16 @@
 i32 main(void) {
 	StartBuild();
 	{
+		FlagBuilder flag_builder = FlagBuilderCreate();
+		
 		Executable e = CreateExecutable((ExecutableOptions){
 			.output	  = "run",
 			.warnings = FLAG_WARNINGS,
 			.std	  = FLAG_STD_C99,
 			#ifdef _WIN32
-			.flags	  = "/MT"
+			.flags	  = "",
+			.linkerFlags = "",
+			.libs = "",
 			#else
 			.flags	  = "-Wl,-rpath,./data"
 			#endif
@@ -77,10 +81,12 @@ i32 main(void) {
 			#endif
 		} else if (isWindows()) {
 			AddIncludePaths(e, "./thirdparty/dirent/include/");
-			AddLibraryPaths(e, "./thirdparty/windows/x64/Release/",
+			AddLibraryPaths(e, 
+				"./thirdparty/ucd-tools/",
 				"./thirdparty/espeak-ng/src/windows/x64/Debug/",
-				"./thirdparty/onnxruntime/lib/");
-			LinkSystemLibraries(e, "piper", "onnxruntime", "libespeak-ng", "ucd");
+				"./thirdparty/onnxruntime/lib/",
+				"./thirdparty/piper1-gpl/");
+			LinkSystemLibraries(e, "libpiper", "onnxruntime", "libespeak-ng", "libucd");
 			
 			if (FileCopy(
 				s("./thirdparty/espeak-ng/src/windows/x64/Debug/libespeak-ng.dll"), 
