@@ -5,6 +5,7 @@ mate
 mate.exe
 mate.obj
 run.sh
+build.zip
 thirdparty/*.wav
 thirdparty/*.raw
 thirdparty/onnxruntime/

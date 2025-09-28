@@ -54,8 +54,8 @@ i32 main(void) {
 		if (isLinux()) {
 			#ifdef __linux__
 			AddLibraryPaths(e, "./thirdparty/piper1-gpl/",
-				"./thirdparty/espeak-ng/build/espeak_ng-install/lib/",
-				"./thirdparty/ucd-tools/",
+				"./thirdparty/espeak-ng/src/.libs/",
+				"./thirdparty/ucd-tools/src/.libs/",
 				"./thirdparty/onnxruntime/lib/");
 			LinkSystemLibraries(e, "piper", "onnxruntime", "espeak-ng", "ucd", "pthread", "m", "stdc++");
 

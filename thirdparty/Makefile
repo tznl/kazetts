@@ -1,58 +1,60 @@
-UCD_DIR	= "ucd-tools/src/"
-UCD_IN	= $(UCD_DIR)case.c  $(UCD_DIR)categories.c  $(UCD_DIR)ctype.c  $(UCD_DIR)proplist.c  $(UCD_DIR)scripts.c  $(UCD_DIR)tostring.c
-UCD_OUT	= case.o categories.o ctype.o proplist.o scripts.o tostring.o
-UCD_INC	= -I$(UCD_DIR)include/
-
-E_ROOT	= espeak-ng/build/
-E_INS	= $(E_ROOT)espeak_ng-install/
-E_BUILD	= $(E_ROOT)espeak_ng/
-E_SRC	= $(E_ROOT)espeak_ng_src/
-
 P_IN	= -c "piper1-gpl/libpiper/src/piper.cpp"
-P_INC	= -I"piper1-gpl/libpiper/include" -I"onnxruntime/include/" -I"$(E_INS)include"
-P_LDIR	= -L"espeak-ng/build/espeak_ng-install/lib/" -L"ucd-tools/" -L"onnxruntime/lib/"
-P_LFLAG	= -lonnxruntime -lucd -lespeak-ng
+P_INC	= -I"piper1-gpl/libpiper/include" -I"onnxruntime/include/" -I"espeak-ng/src/include"
 
-CFLAGS	= -std=c99
 make: ucd espeak piper
-
-clean:
-
-	rm "ucd-tools/libucd.a"
-	rm "piper1-gpl/libpiper.a"
-	rm -rf "espeak-ng/build/"
 
 ucd:
 
-	$(CC) -c $(UCD_IN) $(CFLAGS) $(UCD_INC)
-	ar -rsc libucd.a $(UCD_OUT)
-	rm *.o
-	mv libucd.a "ucd-tools/"
+	cd "ucd-tools"; \
+	./autogen.sh; \
+	./configure --disable-shared --enable-static; \
+	make -B; 
 espeak:
 
 
-	mkdir $(E_ROOT)
-
-	cmake -B "$(E_BUILD)" -S "espeak-ng" \
-	  -DCMAKE_INSTALL_PREFIX="$(E_INS)" \
-	  -DBUILD_SHARED_LIBS=OFF \
-	  -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-	  -DUSE_ASYNC=OFF \
-	  -DUSE_MBROLA=OFF \
-	  -DUSE_LIBSONIC=OFF \
-	  -DUSE_LIBPCAUDIO=OFF \
-	  -DUSE_KLATT=OFF \
-	  -DUSE_SPEECHPLAYER=OFF \
-	  -DEXTRA_cmn=ON \
-	  -DEXTRA_ru=ON \
-	  -DCMAKE_C_FLAGS="-D_FILE_OFFSET_BITS=64 -I$(E_BUILD)/src/espeak_ng_external/src/ucd-tools/src/include" \
-	  -DCMAKE_CXX_FLAGS="-D_FILE_OFFSET_BITS=64 -I$(E_BUILD)/src/espeak_ng_external/src/ucd-tools/src/include"
-
-	cmake --build "$(E_BUILD)" --target install -- -j$$(nproc)
-
+	cd "espeak-ng"; \
+	./autogen.sh; \
+	./configure --disable-shared --enable-static; \
+	make -B; 
 piper:
 
-	$(CXX) $(P_IN) $(P_INC) $(P_LDIR)
-	ar -rsc libpiper.a piper.o
-	rm piper.o
-	mv libpiper.a "piper1-gpl/"
+	$(CXX) $(P_IN) $(P_INC) -o "piper1-gpl/piper.o"
+	ar -rsc "piper1-gpl/libpiper.a" "piper1-gpl/piper.o"
+
+onnx:
+
+	x86_64-w64-mingw32-dlltool -D onnxruntime/lib/onnxruntime.dll -d onnxruntime.def -l onnxruntime/lib/libonnxruntime.a
+#cross compilation
+
+cross: onnx ucd_cross espeak_cross piper_cross
+
+ucd_cross:
+
+	cd "ucd-tools"; \
+	./autogen.sh; \
+	CFLAGS="/usr/x86_64-w64-mingw32/lib/libstdc++.a" ./configure --build=x86_64-pc-linux-gnu --host=x86_64-w64-mingw32 --disable-shared --enable-static; \
+	make -B; 
+espeak_cross:
+
+	-@cd "espeak-ng"; \
+	./autogen.sh; \
+	CFLAGS="-I espeak-ng/" CXXFLAGS="-Iespeak-ng/src/windows/ /usr/x86_64-w64-mingw32/lib/libstdc++.a" ./configure --build=x86_64-pc-linux-gnu --host=x86_64-w64-mingw32 --disable-shared --enable-static; \
+	make -B; 
+piper_cross:
+
+	$(CXX) $(P_IN) $(P_INC) -DORT_DLL_IMPORT -o "piper1-gpl/piper.o" /usr/x86_64-w64-mingw32/lib/libstdc++.a
+	ar -rsc "piper1-gpl/libpiper.a" "piper1-gpl/piper.o"
+
+#	$(CXX) -o piper1-gpl/libpiper.a piper1-gpl/piper.o \
+#	        ./espeak-ng/src/.libs/libespeak-ng.a ./ucd-tools/src/.libs/libucd.a ./onnxruntime/lib/libonnxruntime.a
+clean:
+
+	cd "ucd-tools"; \
+	make clean; 
+
+	cd "espeak-ng"; \
+	make clean; 
+
+	rm -f "piper1-gpl/piper.o"
+	rm -f piper1-gpl/libpiper.*
+	rm -f onnxruntime/lib/libonnxruntime.a

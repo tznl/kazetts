@@ -44,7 +44,6 @@ void write_config(const char *folder);
 
 int main(void) 
 {
-	printf("test\n");
 	char* audio_in  = "./data/export/output.raw";
 	char* audio_out = "./data/export/output.wav";
 
