@@ -27,7 +27,8 @@ make:
 	$(CC) -Wl,-rpath,./data $(CFLAGS) \
 		-o /home/tznl/git/kazetts/build/run \
 		/home/tznl/git/kazetts/build/main.o /home/tznl/git/kazetts/build/miniaudio.o \
-		-L"./thirdparty/piper1-gpl/" -L"./thirdparty/espeak-ng/src/.libs/" -L"./thirdparty/ucd-tools/src/.libs/" -L"./thirdparty/onnxruntime/lib/"\
+		./thirdparty/piper1-gpl/libpiper.a ./thirdparty/espeak-ng/src/.libs/libespeak-ng.a \
+		./thirdparty/ucd-tools/src/.libs/libucd.a ./thirdparty/onnxruntime/lib/libonnxruntime.a \
 		$(LFLAGS)
 	
 	-@cp thirdparty/onnxruntime/lib/libonnxruntime.so build/data/
