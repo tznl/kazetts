@@ -9,6 +9,7 @@ build.zip
 thirdparty/*.wav
 thirdparty/*.raw
 thirdparty/onnxruntime/
+thirdparty/onnxruntime*
 thirdparty/piper1-gpl/libpiper.a
 thirdparty/.vs
 thirdparty/windows/piper/
